@@ -3,96 +3,53 @@ Status : SUCCESS
 Retries: 0
 
 ============================================================
-PLAN
+PLAN (STRUCTURED JSON)
 ============================================================
-### Implementation Plan for Jira Ticket DATA-002: Binary Search Implementation
+{
+  "summary": "Implement an iterative binary search function with comprehensive testing for various edge cases.",
+  "steps": [
+    "Define the function signature for binary_search that accepts a sorted list and a target integer.",
+    "Implement the iterative logic for binary search within the function, ensuring to handle the search boundaries correctly.",
+    "Include a condition to return the index of the target if found, or -1 if the target is not present in the list.",
+    "Create a __main__ block to execute test cases after the function definition.",
+    "Design test cases to cover the following edge cases: an empty list, a list with a single element, searching for the first element, searching for the last element, and searching for a target that is not in the list.",
+    "Run the test cases in the __main__ block and print the results to verify the correctness of the binary search implementation."
+  ]
+}
 
-1. **Understand Requirements**  
-   - Review the ticket description to ensure clarity on the function's purpose, input parameters, expected output, and constraints (iterative implementation, edge cases).
-
-2. **Define Function Signature**  
-   - Determine the function signature as `binary_search(arr: list[int], target: int) -> int`. Ensure that the function accepts a sorted list of integers and a target integer.
-
-3. **Plan the Algorithm**  
-   - Outline the binary search algorithm:
-     - Initialize two pointers, `left` and `right`, to represent the current search bounds.
-     - Use a loop to repeatedly narrow down the search range until the target is found or the range is exhausted.
-     - Calculate the midpoint index and compare the midpoint value with the target.
-     - Adjust the pointers based on the comparison results.
-
-4. **Implement the Iterative Logic**  
-   - Create the iterative logic for the binary search within the function:
-     - Use a while loop that continues as long as `left` is less than or equal to `right`.
-     - Inside the loop, calculate the midpoint and compare it with the target.
-     - If the target is found, return the midpoint index.
-     - If the target is less than the midpoint value, adjust the `right` pointer.
-     - If the target is greater than the midpoint value, adjust the `left` pointer.
-
-5. **Handle Edge Cases**  
-   - Identify and plan for edge cases:
-     - An empty list should return -1.
-     - A list with a single element should return the index if it matches the target or -1 if it does not.
-     - Ensure the function can correctly return the index for the first and last elements in the list.
-     - Ensure the function returns -1 when the target is not found in the list.
-
-6. **Create a Main Block for Testing**  
-   - Plan to include a `__main__` block that will:
-     - Define a series of test cases covering all identified edge cases.
-     - Call the `binary_search` function with these test cases.
-     - Print the results to verify correctness.
-
-7. **Document the Function**  
-   - Write clear documentation for the `binary_search` function, including:
-     - A brief description of what the function does.
-     - Details about the parameters and return value.
-     - Examples of usage, including edge cases.
-
-8. **Review and Refine**  
-   - Review the implementation plan for completeness and clarity.
-   - Ensure that all requirements from the ticket are addressed.
-   - Make any necessary adjustments based on feedback from team members or stakeholders.
-
-9. **Prepare for Code Review**  
-   - Organize the implementation for easy review, ensuring that the code is clean and follows coding standards.
-   - Prepare to present the implementation plan and the function during the code review process.
-
-10. **Finalize and Merge**  
-    - After successful code review and any required changes, finalize the implementation.
-    - Merge the code into the main branch following the team's version control practices. 
-
-11. **Monitor for Issues**  
-    - After deployment, monitor for any issues or bugs reported by users related to the binary search functionality.
-    - Be prepared to address any feedback or necessary adjustments based on real-world usage.
+============================================================
+PLAN (FORMATTED)
+============================================================
+1. Define the function signature for binary_search that accepts a sorted list and a target integer.
+2. Implement the iterative logic for binary search within the function, ensuring to handle the search boundaries correctly.
+3. Include a condition to return the index of the target if found, or -1 if the target is not present in the list.
+4. Create a __main__ block to execute test cases after the function definition.
+5. Design test cases to cover the following edge cases: an empty list, a list with a single element, searching for the first element, searching for the last element, and searching for a target that is not in the list.
+6. Run the test cases in the __main__ block and print the results to verify the correctness of the binary search implementation.
 
 ============================================================
 GENERATED CODE
 ============================================================
 def binary_search(arr: list[int], target: int) -> int:
     left, right = 0, len(arr) - 1
-    
     while left <= right:
         mid = left + (right - left) // 2
-        
         if arr[mid] == target:
             return mid
         elif arr[mid] < target:
             left = mid + 1
         else:
             right = mid - 1
-            
     return -1
 
 if __name__ == "__main__":
     # Test cases
-    print(binary_search([], 1))          # Edge case: empty list
-    print(binary_search([1], 1))         # Edge case: single element, found
-    print(binary_search([1], 2))         # Edge case: single element, not found
+    print(binary_search([], 1))  # Edge case: empty list
+    print(binary_search([1], 1))  # Edge case: single element, found
+    print(binary_search([1], 2))  # Edge case: single element, not found
     print(binary_search([1, 2, 3, 4, 5], 1))  # Edge case: first element
     print(binary_search([1, 2, 3, 4, 5], 5))  # Edge case: last element
     print(binary_search([1, 2, 3, 4, 5], 6))  # Edge case: not found
-    print(binary_search([1, 2, 3, 4, 5], 3))  # Normal case: middle element found
-    print(binary_search([1, 2, 3, 4, 5], 0))  # Normal case: less than min, not found
-    print(binary_search([1, 2, 3, 4, 5], 7))  # Normal case: greater than max, not found
 
 ============================================================
 COMPILER OUTPUT
@@ -102,9 +59,6 @@ COMPILER OUTPUT
 -1
 0
 4
--1
-2
--1
 -1
 
 ============================================================
@@ -131,33 +85,25 @@ def test_last_element():
 def test_not_found():
     assert binary_search([1, 2, 3, 4, 5], 6) == -1
 
-def test_middle_element_found():
-    assert binary_search([1, 2, 3, 4, 5], 3) == 2
-
-def test_less_than_min_not_found():
-    assert binary_search([1, 2, 3, 4, 5], 0) == -1
-
-def test_greater_than_max_not_found():
-    assert binary_search([1, 2, 3, 4, 5], 7) == -1
-
 ============================================================
 TEST OUTPUT
 ============================================================
 ============================= test session starts ==============================
-platform darwin -- Python 3.14.7, pytest-9.1.1, pluggy-1.6.0 -- /usr/local/bin/python3
-cachedir: .pytest_cache
-rootdir: /var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_ayxy7z_d
-plugins: anyio-4.14.2, langsmith-0.10.17
-collecting ... collected 9 items
+collecting ... collected 6 items
 
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_ayxy7z_d/test_solution.py::test_empty_list PASSED [ 11%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_ayxy7z_d/test_solution.py::test_single_element_found PASSED [ 22%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_ayxy7z_d/test_solution.py::test_single_element_not_found PASSED [ 33%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_ayxy7z_d/test_solution.py::test_first_element PASSED [ 44%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_ayxy7z_d/test_solution.py::test_last_element PASSED [ 55%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_ayxy7z_d/test_solution.py::test_not_found PASSED [ 66%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_ayxy7z_d/test_solution.py::test_middle_element_found PASSED [ 77%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_ayxy7z_d/test_solution.py::test_less_than_min_not_found PASSED [ 88%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_ayxy7z_d/test_solution.py::test_greater_than_max_not_found PASSED [100%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_zpl58ypt/test_solution.py::test_empty_list PASSED [ 16%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_zpl58ypt/test_solution.py::test_single_element_found PASSED [ 33%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_zpl58ypt/test_solution.py::test_single_element_not_found PASSED [ 50%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_zpl58ypt/test_solution.py::test_first_element PASSED [ 66%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_zpl58ypt/test_solution.py::test_last_element PASSED [ 83%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_zpl58ypt/test_solution.py::test_not_found PASSED [100%]
 
-============================== 9 passed in 0.01s ===============================
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.14.7-final-0 _______________
+
+Name          Stmts   Miss  Cover   Missing
+-------------------------------------------
+solution.py      17      6    65%   15-20
+-------------------------------------------
+TOTAL            17      6    65%
+============================== 6 passed in 0.02s ===============================
