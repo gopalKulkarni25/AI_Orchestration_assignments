@@ -12,7 +12,7 @@ PLAN (STRUCTURED JSON)
     "Implement file existence check to raise FileNotFoundError if the specified filepath does not exist.",
     "Open the CSV file and read its contents to determine if it is empty, raising ValueError if it is.",
     "Count the number of rows in the CSV file, adjusting the count based on the skip_header parameter.",
-    "In the main execution block, create a small in-memory CSV dataset for testing purposes.",
+    "In the __main__ section, create a small in-memory CSV dataset for testing purposes.",
     "Write the in-memory CSV dataset to a temporary file to simulate a real CSV file.",
     "Call the count_csv_rows function with the path to the temporary file and print the result."
   ]
@@ -25,7 +25,7 @@ PLAN (FORMATTED)
 2. Implement file existence check to raise FileNotFoundError if the specified filepath does not exist.
 3. Open the CSV file and read its contents to determine if it is empty, raising ValueError if it is.
 4. Count the number of rows in the CSV file, adjusting the count based on the skip_header parameter.
-5. In the main execution block, create a small in-memory CSV dataset for testing purposes.
+5. In the __main__ section, create a small in-memory CSV dataset for testing purposes.
 6. Write the in-memory CSV dataset to a temporary file to simulate a real CSV file.
 7. Call the count_csv_rows function with the path to the temporary file and print the result.
 
@@ -50,7 +50,7 @@ def count_csv_rows(filepath: str, skip_header: bool = True) -> int:
         return len(rows) - (1 if skip_header else 0)
 
 if __name__ == "__main__":
-    csv_data = "header1,header2\nvalue1,value2\nvalue3,value4"
+    csv_data = "header1,header2\nrow1col1,row1col2\nrow2col1,row2col2\n"
     with tempfile.NamedTemporaryFile(delete=False, mode='w', newline='') as temp_file:
         temp_file.write(csv_data)
         temp_file_path = temp_file.name
@@ -74,8 +74,8 @@ import os
 import tempfile
 from solution import count_csv_rows
 
-def test_count_csv_rows_with_data():
-    csv_data = "header1,header2\nvalue1,value2\nvalue3,value4"
+def test_count_csv_rows_with_header():
+    csv_data = "header1,header2\nrow1col1,row1col2\nrow2col1,row2col2\n"
     with tempfile.NamedTemporaryFile(delete=False, mode='w', newline='') as temp_file:
         temp_file.write(csv_data)
         temp_file_path = temp_file.name
@@ -86,7 +86,7 @@ def test_count_csv_rows_with_data():
         os.remove(temp_file_path)
 
 def test_count_csv_rows_without_header():
-    csv_data = "header1,header2\nvalue1,value2\nvalue3,value4"
+    csv_data = "header1,header2\nrow1col1,row1col2\nrow2col1,row2col2\n"
     with tempfile.NamedTemporaryFile(delete=False, mode='w', newline='') as temp_file:
         temp_file.write(csv_data)
         temp_file_path = temp_file.name
@@ -116,24 +116,12 @@ TEST OUTPUT
 ============================= test session starts ==============================
 collecting ... collected 4 items
 
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_kiodu1kg/test_solution.py::test_count_csv_rows_with_data PASSED [ 25%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_kiodu1kg/test_solution.py::test_count_csv_rows_without_header PASSED [ 50%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_kiodu1kg/test_solution.py::test_count_csv_rows_empty_file PASSED [ 75%]
-../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_kiodu1kg/test_solution.py::test_count_csv_rows_file_not_found PASSED [100%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_dwokkcnd/test_solution.py::test_count_csv_rows_with_header PASSED [ 25%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_dwokkcnd/test_solution.py::test_count_csv_rows_without_header PASSED [ 50%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_dwokkcnd/test_solution.py::test_count_csv_rows_empty_file PASSED [ 75%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_dwokkcnd/test_solution.py::test_count_csv_rows_file_not_found PASSED [100%]
 
 ================================ tests coverage ================================
-_______________ coverage: platform darwin, python 3.14.7-final-0 _______________
-
-Name          Stmts   Miss  Cover   Missing
--------------------------------------------
-solution.py      21      8    62%   19-28
--------------------------------------------
-TOTAL            21      8    62%
-============================== 4 passed in 0.01s ===============================
-
-============================================================
-COVERAGE REPORT
-============================================================
 _______________ coverage: platform darwin, python 3.14.7-final-0 _______________
 
 Name          Stmts   Miss  Cover   Missing

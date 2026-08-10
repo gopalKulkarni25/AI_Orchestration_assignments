@@ -274,11 +274,11 @@ def test_runner_node(state: AgentState) -> AgentState:
 
         test_output = (result.stdout + result.stderr).strip()
 
-        # extract the coverage summary block (lines from "TOTAL" or "------" onward)
+        # extract only the coverage table (starts at the "Name ... Stmts" header line)
         coverage_report = ""
         lines = test_output.splitlines()
         for i, line in enumerate(lines):
-            if line.startswith("TOTAL") or "coverage:" in line.lower() or line.startswith("------"):
+            if line.startswith("Name") and "Stmts" in line:
                 coverage_report = "\n".join(lines[i:])
                 break
 
@@ -289,8 +289,6 @@ def test_runner_node(state: AgentState) -> AgentState:
                     "coverage_report": coverage_report, "error": error_msg}
 
         print(f"[TEST_RUNNER] ALL TESTS PASSED\n{test_output}")
-        if coverage_report:
-            print(f"[TEST_RUNNER] Coverage:\n{coverage_report}")
         return {**state, "test_code": test_code, "test_output": test_output,
                 "coverage_report": coverage_report, "error": None}
 
@@ -343,7 +341,7 @@ def build_graph():
 
 
 if __name__ == "__main__":
-    ticket = TICKETS[2]
+    ticket = TICKETS[1]
 
     separator = "=" * 60
     print(f"\n{separator}")
@@ -363,7 +361,7 @@ if __name__ == "__main__":
         "coverage_report": "",
         "error": None,
         "retry_count": 0,
-        "simulate_failure": True,  # set to False to run normally
+        "simulate_failure": False,  # set to False to run normally
     }
 
     result = agent.invoke(initial_state)
@@ -376,18 +374,15 @@ if __name__ == "__main__":
         "error") else "FAILED (max retries reached)"
     print(f"Final status : {status}")
 
-    if result.get("error"):
-        print(f"\nLast error:\n{result['error']}")
-    else:
-        print("\n--- Generated Code ---")
-        print(result["code"])
-        print("\n--- Compiler Output ---")
-        print(result["compiler_output"] or "(no output)")
+    print("\n--- Generated Code ---")
+    print(result["code"])
+    print("\n--- Compiler Output ---")
+    print(result["compiler_output"] or "(no output)")
+    if result.get("test_output"):
         print("\n--- Test Output ---")
         print(result["test_output"])
-        if result.get("coverage_report"):
-            print("\n--- Coverage Report ---")
-            print(result["coverage_report"])
+    if result.get("error"):
+        print(f"\nLast error:\n{result['error']}")
 
     # write results to output/
     output_dir = os.path.join(os.path.dirname(__file__), "output")
@@ -410,8 +405,6 @@ if __name__ == "__main__":
         f.write(result.get("test_code", "") + "\n")
         f.write(f"\n{'=' * 60}\nTEST OUTPUT\n{'=' * 60}\n")
         f.write(result.get("test_output", "") + "\n")
-        f.write(f"\n{'=' * 60}\nCOVERAGE REPORT\n{'=' * 60}\n")
-        f.write(result.get("coverage_report", "(no coverage data)") + "\n")
         if result.get("error"):
             f.write(f"\n{'=' * 60}\nLAST ERROR\n{'=' * 60}\n")
             f.write(result["error"] + "\n")
