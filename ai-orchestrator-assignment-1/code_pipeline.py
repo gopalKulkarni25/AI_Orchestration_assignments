@@ -341,7 +341,7 @@ def build_graph():
 
 
 if __name__ == "__main__":
-    ticket = TICKETS[1]
+    ticket = TICKETS[2]
 
     separator = "=" * 60
     print(f"\n{separator}")
@@ -361,7 +361,7 @@ if __name__ == "__main__":
         "coverage_report": "",
         "error": None,
         "retry_count": 0,
-        "simulate_failure": False,  # set to False to run normally
+        "simulate_failure": True,  # set to False to run normally
     }
 
     result = agent.invoke(initial_state)
