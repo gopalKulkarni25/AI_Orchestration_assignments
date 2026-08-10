@@ -1,0 +1,151 @@
+Ticket : DATA-003 — CSV row counter utility
+Status : SUCCESS
+Retries: 1
+
+============================================================
+PLAN
+============================================================
+### Implementation Plan for Jira Ticket DATA-003: CSV Row Counter Utility
+
+1. **Define Requirements**  
+   - Review the ticket description to understand the requirements for the `count_csv_rows` function, including input parameters, expected outputs, and error handling.
+
+2. **Identify Dependencies**  
+   - Determine any libraries or modules that may be needed for handling CSV files and file operations (e.g., CSV handling libraries, file system utilities).
+
+3. **Design Function Signature**  
+   - Outline the function signature for `count_csv_rows`, specifying the input parameters (`filepath` and `skip_header`) and the return type (integer).
+
+4. **Implement File Existence Check**  
+   - Plan a mechanism to check if the specified file exists. If it does not, the function should raise a `FileNotFoundError`.
+
+5. **Implement File Read Logic**  
+   - Design the logic to read the contents of the CSV file. This should include handling the file opening and reading process.
+
+6. **Count Rows Logic**  
+   - Develop the logic to count the number of data rows in the CSV file. If `skip_header` is set to `True`, ensure that the first row is excluded from the count.
+
+7. **Handle Empty File Case**  
+   - Plan for a check to determine if the file is empty. If it is, the function should raise a `ValueError`.
+
+8. **Create Main Functionality**  
+   - Outline the steps to implement the `__main__` block, which will create a small in-memory CSV, write it to a temporary file, and call the `count_csv_rows` function.
+
+9. **Implement Temporary File Handling**  
+   - Determine how to create and manage a temporary file for the in-memory CSV data, ensuring it is properly cleaned up after use.
+
+10. **Testing Strategy**  
+    - Develop a testing strategy to validate the functionality of `count_csv_rows`. This should include:
+        - Tests for valid CSV files with and without headers.
+        - Tests for non-existent file paths.
+        - Tests for empty files.
+
+11. **Documentation**  
+    - Prepare documentation for the function, including usage examples, parameter descriptions, return values, and error handling.
+
+12. **Code Review Process**  
+    - Establish a code review process to ensure that the implementation meets the requirements and follows best practices.
+
+13. **Deployment Plan**  
+    - Plan for the deployment of the utility, including any necessary updates to documentation or user guides.
+
+14. **Monitor and Iterate**  
+    - After deployment, monitor the utility for any issues or user feedback, and plan for future iterations or enhancements based on that feedback.
+
+============================================================
+GENERATED CODE
+============================================================
+import csv
+import os
+import tempfile
+
+def count_csv_rows(filepath: str, skip_header: bool = True) -> int:
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f"The file {filepath} does not exist.")
+    
+    with open(filepath, 'r', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        rows = list(reader)
+        
+        if not rows:
+            raise ValueError("The file is empty.")
+        
+        return len(rows) - (1 if skip_header else 0)
+
+if __name__ == "__main__":
+    csv_data = "header1,header2\nrow1col1,row1col2\nrow2col1,row2col2"
+    with tempfile.NamedTemporaryFile(delete=False, mode='w', newline='') as temp_file:
+        temp_file.write(csv_data)
+        temp_file_path = temp_file.name
+    
+    try:
+        row_count = count_csv_rows(temp_file_path)
+        print(f"Number of data rows: {row_count}")
+    finally:
+        os.remove(temp_file_path)
+
+============================================================
+COMPILER OUTPUT
+============================================================
+Number of data rows: 2
+
+============================================================
+TEST CODE
+============================================================
+import pytest
+import os
+import tempfile
+from solution import count_csv_rows
+
+def test_count_csv_rows_with_data():
+    csv_data = "header1,header2\nrow1col1,row1col2\nrow2col1,row2col2"
+    with tempfile.NamedTemporaryFile(delete=False, mode='w', newline='') as temp_file:
+        temp_file.write(csv_data)
+        temp_file_path = temp_file.name
+    
+    try:
+        assert count_csv_rows(temp_file_path) == 2
+    finally:
+        os.remove(temp_file_path)
+
+def test_count_csv_rows_without_header():
+    csv_data = "header1,header2\nrow1col1,row1col2\nrow2col1,row2col2"
+    with tempfile.NamedTemporaryFile(delete=False, mode='w', newline='') as temp_file:
+        temp_file.write(csv_data)
+        temp_file_path = temp_file.name
+    
+    try:
+        assert count_csv_rows(temp_file_path, skip_header=False) == 3
+    finally:
+        os.remove(temp_file_path)
+
+def test_count_csv_rows_file_not_found():
+    with pytest.raises(FileNotFoundError):
+        count_csv_rows("non_existent_file.csv")
+
+def test_count_csv_rows_empty_file():
+    with tempfile.NamedTemporaryFile(delete=False, mode='w', newline='') as temp_file:
+        temp_file_path = temp_file.name
+    
+    try:
+        with pytest.raises(ValueError):
+            count_csv_rows(temp_file_path)
+    finally:
+        os.remove(temp_file_path)
+
+============================================================
+TEST OUTPUT
+============================================================
+============================= test session starts ==============================
+platform darwin -- Python 3.14.7, pytest-9.1.1, pluggy-1.6.0 -- /usr/local/bin/python3
+cachedir: .pytest_cache
+rootdir: /var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_vqlxhmt2
+plugins: anyio-4.14.2, langsmith-0.10.17
+collecting ... collected 4 items
+
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_vqlxhmt2/test_solution.py::test_count_csv_rows_with_data PASSED [ 25%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_vqlxhmt2/test_solution.py::test_count_csv_rows_without_header PASSED [ 50%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_vqlxhmt2/test_solution.py::test_count_csv_rows_file_not_found PASSED [ 75%]
+../../../../../../../var/folders/yz/_9wskc3n2_zdlgl_8w32g1jm0000gn/T/agent_test_vqlxhmt2/test_solution.py::test_count_csv_rows_empty_file PASSED [100%]
+
+============================== 4 passed in 0.01s ===============================
