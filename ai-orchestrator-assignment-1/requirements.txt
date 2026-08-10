@@ -2,3 +2,5 @@ langgraph
 langchain-openai
 python-dotenv
 pytest
+pytest-cov
+langsmith
