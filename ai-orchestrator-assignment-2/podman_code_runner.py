@@ -63,11 +63,10 @@ class PodmanCodeRunner:
         """Build a reusable non-root image with app.py baked in."""
         containerfile = (
             "FROM python:3.11-slim\n"
-            "RUN useradd --create-home sandbox\n"
-            "WORKDIR /home/sandbox\n"
-            "COPY app.py /home/sandbox/app.py\n"
-            "USER sandbox\n"
-            'CMD ["python", "/home/sandbox/app.py"]\n'
+            "WORKDIR /app\n"
+            "COPY app.py /app/app.py\n"
+            "USER 1000:1000\n"
+            'CMD ["python", "/app/app.py"]\n'
         )
         context = BytesIO()
         with tarfile.open(fileobj=context, mode="w") as archive:
