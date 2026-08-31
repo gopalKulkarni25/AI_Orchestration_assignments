@@ -1,6 +1,9 @@
 import ast
 import os
 import pathlib
+import subprocess
+import tempfile
+from concurrent.futures import ThreadPoolExecutor
 
 import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
@@ -38,6 +41,7 @@ class SwarmState(TypedDict):
     feature_request: str
     codebase_context: str
     generated_code: str
+    lint_findings: str      # populated by linter_agent before reviewer sees the code
     review_feedback: str
     review_status: str
     iteration_count: int
@@ -115,13 +119,14 @@ def coder_agent(state: SwarmState) -> SwarmState:
             f"Feature request:\n{state['feature_request']}"
         )
     else:
-        print(f"\n[CODER] Iteration {it + 1}: revising based on reviewer feedback...")
-        print(f"    feedback: {state['review_feedback'][:120]}")
+        print(f"\n[CODER] Iteration {it + 1}: revising based on feedback...")
+        lint = f"\nLinter violations to fix:\n{state['lint_findings']}" if state["lint_findings"] else ""
+        print(f"    review feedback : {state['review_feedback'][:120]}")
         user_content = (
             f"Feature request:\n{state['feature_request']}\n\n"
             f"Codebase context:\n{state['codebase_context']}\n\n"
             f"Your previous code:\n{state['generated_code']}\n\n"
-            f"Fix ALL of this feedback:\n{state['review_feedback']}"
+            f"Fix ALL of this feedback:\n{state['review_feedback']}{lint}"
         )
 
     messages = [
@@ -137,32 +142,95 @@ def coder_agent(state: SwarmState) -> SwarmState:
     result = _llm.invoke(messages)
     code = result.content.strip()
     print(f"[CODER] Code written ({len(code.splitlines())} lines)")
-    return {**state, "generated_code": code, "review_status": "PENDING"}
+    return {**state, "generated_code": code, "lint_findings": "", "review_status": "PENDING"}
 
 
-def reviewer_agent(state: SwarmState) -> SwarmState:
-    """Review generated code against architecture guidelines; emit APPROVED or REJECTED verdict."""
-    it = state["iteration_count"]
-    print(f"\n[REVIEWER] Reviewing (iteration {it + 1})...")
+def linter_agent(state: SwarmState) -> SwarmState:
+    """Run ruff on the generated code and store structured violations in lint_findings."""
+    print("\n[LINTER] Running ruff on generated code...")
+    findings = ""
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False, encoding="utf-8") as f:
+            f.write(state["generated_code"])
+            tmp_path = f.name
+
+        result = subprocess.run(
+            ["ruff", "check", "--output-format=text", tmp_path],
+            capture_output=True, text=True, timeout=10,
+        )
+        findings = result.stdout.strip().replace(tmp_path, "<generated_code>")
+        if findings:
+            print(f"[LINTER] {len(findings.splitlines())} violation(s) found")
+        else:
+            print("[LINTER] No violations — code is clean")
+    except FileNotFoundError:
+        print("[LINTER] ruff not installed — skipping lint check")
+    except subprocess.TimeoutExpired:
+        print("[LINTER] ruff timed out — skipping lint check")
+    finally:
+        if tmp_path:
+            pathlib.Path(tmp_path).unlink(missing_ok=True)
+
+    return {**state, "lint_findings": findings}
+
+
+def _run_focused_review(args: tuple[str, str]) -> dict:
+    """Run one focused sub-review (style or security) and return role/verdict/feedback."""
+    role, code_block = args
+    focus = {
+        "style": (
+            "code style and conventions only: naming (snake_case), type hints on every "
+            "parameter and return value, docstrings on public functions, and imports at the top"
+        ),
+        "security": (
+            "correctness and safety only: input validation (ValueError on empty input), "
+            "no bare except clauses, no global mutable state, function body ≤ 30 lines"
+        ),
+    }[role]
 
     messages = [
         SystemMessage(
             content=(
-                "You are a strict code reviewer. "
-                f"Check the code against these guidelines:\n{ARCHITECTURE_GUIDELINES}\n\n"
-                "List every violation you find. "
-                "End your response with EXACTLY one of these two lines:\n"
-                "VERDICT: APPROVED\n"
-                "VERDICT: REJECTED"
+                f"You are a strict code reviewer. Review ONLY for {focus}. "
+                "List every violation found. "
+                "End your response with EXACTLY one of:\nVERDICT: APPROVED\nVERDICT: REJECTED"
             )
         ),
-        HumanMessage(content=f"Code to review:\n{state['generated_code']}"),
+        HumanMessage(content=f"Code to review:\n{code_block}"),
     ]
     result = _llm.invoke(messages)
     feedback = result.content.strip()
-    status = "APPROVED" if "VERDICT: APPROVED" in feedback else "REJECTED"
-    print(f"[REVIEWER] Verdict: {status}")
-    return {**state, "review_feedback": feedback, "review_status": status, "iteration_count": it + 1}
+    verdict = "APPROVED" if "VERDICT: APPROVED" in feedback else "REJECTED"
+    print(f"  [{role:>8} reviewer] {verdict}")
+    return {"role": role, "verdict": verdict, "feedback": feedback}
+
+
+def reviewer_agent(state: SwarmState) -> SwarmState:
+    """Fan out to style + security reviewers in parallel; APPROVE only if both agree."""
+    it = state["iteration_count"]
+    print(f"\n[REVIEWER] Parallel review — style + security (iteration {it + 1})...")
+
+    lint_note = f"\n\nLinter findings:\n{state['lint_findings']}" if state["lint_findings"] else ""
+    code_block = state["generated_code"] + lint_note
+
+    print("[FAN OUT] dispatching style + security reviewers concurrently...")
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(_run_focused_review, [("style", code_block), ("security", code_block)]))
+
+    style_r, security_r = results[0], results[1]
+    rejections = [r for r in results if r["verdict"] == "REJECTED"]
+    status = "REJECTED" if rejections else "APPROVED"
+    combined_feedback = (
+        " | ".join(f"[{r['role']}] {r['feedback']}" for r in rejections)
+        if rejections
+        else f"[style] {style_r['feedback']}"
+    )
+
+    print(
+        f"[AGGREGATE] style={style_r['verdict']} | security={security_r['verdict']} -> {status}"
+    )
+    return {**state, "review_feedback": combined_feedback, "review_status": status, "iteration_count": it + 1}
 
 
 def graceful_degrader(state: SwarmState) -> SwarmState:
@@ -192,13 +260,15 @@ def route_after_review(state: SwarmState) -> str:
 # ── Graph ─────────────────────────────────────────────────────────────────────
 
 def build_graph():
-    """Compile the Coder → Reviewer → {END | retry | escalate} LangGraph."""
+    """Compile the coder → linter → reviewer(parallel) → {END | retry | escalate} LangGraph."""
     g = StateGraph(SwarmState)
     g.add_node("coder_agent", coder_agent)
+    g.add_node("linter_agent", linter_agent)
     g.add_node("reviewer_agent", reviewer_agent)
     g.add_node("graceful_degrader", graceful_degrader)
     g.set_entry_point("coder_agent")
-    g.add_edge("coder_agent", "reviewer_agent")
+    g.add_edge("coder_agent", "linter_agent")       # linter runs before reviewer
+    g.add_edge("linter_agent", "reviewer_agent")
     g.add_edge("graceful_degrader", END)
     g.add_conditional_edges(
         "reviewer_agent",
@@ -223,6 +293,7 @@ def main() -> None:
         "feature_request": FEATURE_REQUEST,
         "codebase_context": codebase_context,
         "generated_code": "",
+        "lint_findings": "",
         "review_feedback": "",
         "review_status": "PENDING",
         "iteration_count": 0,

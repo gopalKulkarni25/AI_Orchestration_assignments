@@ -4,3 +4,4 @@ langchain-core
 chromadb
 sentence-transformers
 python-dotenv
+ruff
