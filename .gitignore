@@ -11,4 +11,5 @@ build/
 *.log
 .claude/
 .coverage
+.pytest_cache/
 workspace/
